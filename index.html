@@ -1,0 +1,161 @@
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Bitcoin Tools</title>
+      <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-100 min-h-screen p-8">
+      <div class="container mx-auto">
+          <h1 class="text-3xl font-bold mb-6 text-center text-gray-800">Bitcoin Validator</h1>
+          <div class="flex flex-wrap -mx-2">
+              <!-- Target Calculator -->
+              <div class="w-full md:w-1/2 px-2 mb-4">
+                  <div id="targetCalculatorContent" class="bg-white p-6 rounded-lg shadow-md transition-all duration-300 overflow-hidden">
+                      <h2 class="text-2xl font-bold mb-4">Target Calculator</h2>
+                      <input type="text" id="compactInput" placeholder="Enter bits (e.g., 0x17038a6d)" class="w-full p-2 border rounded mb-4">
+                      <div class="flex space-x-2">
+                          <button onclick="calculateTarget()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Calculate</button>
+                          <button onclick="clearTargetCalculator()" class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">Clear</button>
+                      </div>
+                      <div id="result" class="mt-4"></div>
+                  </div>
+              </div>
+            
+              <!-- Block Verifier -->
+              <div class="w-full md:w-1/2 px-2 mb-4">
+                  <div id="blockVerifierContent" class="bg-white p-6 rounded-lg shadow-md transition-all duration-300 overflow-hidden">
+                      <h2 class="text-2xl font-bold mb-4">Block Verifier</h2>
+                      <input type="text" id="hexInput" placeholder="Enter your 80-byte hexadecimal input" class="w-full p-2 border rounded mb-4">
+                      <div class="flex space-x-2">
+                          <button onclick="verifyBlock()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Verify</button>
+                          <button onclick="clearBlockVerifier()" class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">Clear</button>
+                      </div>
+                      <div id="blockResult" class="mt-4"></div>
+                  </div>
+              </div>
+          </div>
+      </div>   
+       <script>
+          // Target Calculator functions
+          function calculateTarget() {
+              const compactInput = document.getElementById('compactInput').value.trim();
+              const compact = parseInt(compactInput, 16);
+              const resultDiv = document.getElementById('result');
+
+              if (compactInput.replace('0x', '').length == 8) {
+                const exponent = compact >> 24;
+                const coefficient = compact & 0x00ffffff;
+                const target = coefficient * (2 ** (8 * (exponent - 3)));
+                const targetHex = target.toString(16).padStart(64, '0');
+
+                const MAX_TARGET = 0x00000000FFFF0000000000000000000000000000000000000000000000000000n;
+                const difficulty = Number(MAX_TARGET / BigInt(target));
+
+                const result = {
+                    compact: `0x${compact.toString(16).padStart(8, '0')}`,
+                    exponent: `0x${exponent.toString(16).padStart(2, '0')} (${exponent})`,
+                    coefficient: `0x${coefficient.toString(16).padStart(6, '0')} (${coefficient})`,
+                    targetDecimal: target.toLocaleString(),
+                    targetHex: `0x${targetHex}`,
+                    targetBytes: targetHex.match(/.{1,8}/g).join(' '),
+                    difficulty: difficulty
+                };
+
+                const targetCalculatorContent = document.getElementById('targetCalculatorContent');
+                const blockVerifierContent = document.getElementById('blockVerifierContent');
+        
+                // targetCalculatorContent.style.maxHeight = '300px';
+                // blockVerifierContent.style.maxHeight = '300px';
+
+                resultDiv.innerHTML = `
+                    <h3 class="text-xl font-semibold mb-2 mt-4 text-gray-700">Results:</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <tr><td class="font-medium">Compact:</td><td class="break-all">${result.compact}</td></tr>
+                            <tr><td class="font-medium">Exponent:</td><td>${result.exponent}</td></tr>
+                            <tr><td class="font-medium">Coefficient:</td><td>${result.coefficient}</td></tr>
+                            <tr><td class="font-medium">Target (Decimal):</td><td class="break-all">${result.targetDecimal}</td></tr>
+                            <tr><td class="font-medium">Target (Hex):</td><td class="break-all">${result.targetHex}</td></tr>
+                            <tr><td class="font-medium">Target (32 bytes hex):</td><td class="break-all">${result.targetBytes}</td></tr>
+                            <tr><td class="font-medium">Difficulty:</td><td>${result.difficulty}</td></tr>
+                        </table>
+                    </div>
+                `;
+              } else {
+                resultDiv.innerHTML = "<p class='text-red-500'>Invalid input length. Please enter exactly 80 bytes (160 hexadecimal characters).</p>";
+              }
+          }
+
+          // Block Verifier functions
+          function splitHexInput(hexInput) {
+              const byteGroups = [4, 32, 32, 4, 4, 4];
+              let result = [];
+              let start = 0;
+              for (let group of byteGroups) {
+                  let end = start + group * 2;
+                  result.push(hexInput.slice(start, end));
+                  start = end;
+              }
+              return result;
+          }
+
+          function littleEndianConvert(hexString) {
+              return hexString.match(/.{2}/g).reverse().join('');
+          }
+
+          function hexToUint8Array(hexString) {
+              return new Uint8Array(hexString.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+          }
+
+          async function verifyBlock() {
+              const rawInput = document.getElementById('hexInput').value.trim();
+              const resultDiv = document.getElementById('blockResult');
+
+              if (rawInput.length === 160) {
+                  const splitResult = splitHexInput(rawInput);
+                  const labels = ["Version", "prevBlockHash", "MerkleRoot", "Timestamp", "nBits", "Nonce"];
+
+                  const targetCalculatorContent = document.getElementById('targetCalculatorContent');
+                  const blockVerifierContent = document.getElementById('blockVerifierContent');
+    
+                  // blockVerifierContent.style.maxHeight = '300px';
+                  // targetCalculatorContent.style.maxHeight = '300px';
+
+                  let output = "<h3 class='text-xl font-semibold mt-4 mb-2'>Split result:</h3>";
+                  splitResult.forEach((group, i) => {
+                      const littleEndian = littleEndianConvert(group);
+                      output += `<p><strong>${labels[i]}</strong> (${group.length / 2} bytes): ${littleEndian}</p>`;
+                  });
+
+                  const inputBytes = hexToUint8Array(rawInput);
+                  const firstHashBytes = await crypto.subtle.digest('SHA-256', inputBytes);
+                  const secondHashBytes = await crypto.subtle.digest('SHA-256', firstHashBytes);
+                
+                  const finalHash = Array.from(new Uint8Array(secondHashBytes))
+                      .map(b => b.toString(16).padStart(2, '0'))
+                      .join('');
+                
+                  const finalHashLittleEndian = littleEndianConvert(finalHash);
+                  output += `<p class='mt-4'><strong>SHA256 Hash</strong> (32 bytes): ${finalHashLittleEndian}</p>`;
+
+                  resultDiv.innerHTML = output;
+              } else {
+                  resultDiv.innerHTML = "<p class='text-red-500'>Invalid input length. Please enter exactly 80 bytes (160 hexadecimal characters).</p>";
+              }
+          }
+        function clearTargetCalculator() {
+            document.getElementById('compactInput').value = '';
+            document.getElementById('result').innerHTML = '';
+        }
+
+        function clearBlockVerifier() {
+            document.getElementById('hexInput').value = '';
+            document.getElementById('blockResult').innerHTML = '';
+        }
+      </script>
+
+  </body>
+    
+  </html>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Target Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto pt-16 px-4">
+      <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-2xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6 text-center text-gray-800">Target Calculator</h1>
+        <div class="flex mb-4">
+            <input type="text" id="compactInput" placeholder="Enter bits (e.g., 0x17038a6d)" class="flex-grow p-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <button onclick="calculateTarget()" class="bg-blue-500 text-white px-4 py-2 rounded-r-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">Calculate</button>
+        </div>
+        <div id="result" class="mt-6 space-y-2"></div>
+    </div>
+
+    <script>
+        function calculateTarget() {
+            const compactInput = document.getElementById('compactInput').value;
+            const compact = parseInt(compactInput, 16);
+
+            if (isNaN(compact)) {
+                alert("Invalid input. Please enter a valid hexadecimal number.");
+                return;
+            }
+
+            const exponent = compact >> 24;
+            const coefficient = compact & 0x00ffffff;
+            const target = coefficient * (2 ** (8 * (exponent - 3)));
+            const targetHex = target.toString(16).padStart(64, '0');
+
+            const MAX_TARGET = 0x00000000FFFF0000000000000000000000000000000000000000000000000000n;
+            const difficulty = Number(MAX_TARGET / BigInt(target));
+
+            const result = {
+                compact: `0x${compact.toString(16).padStart(8, '0')}`,
+                exponent: `0x${exponent.toString(16).padStart(2, '0')} (${exponent})`,
+                coefficient: `0x${coefficient.toString(16).padStart(6, '0')} (${coefficient})`,
+                targetDecimal: target.toLocaleString(),
+                targetHex: `0x${targetHex}`,
+                targetBytes: targetHex.match(/.{1,8}/g).join(' '),
+                difficulty: difficulty
+            };
+
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `
+                <h2 class="text-2xl font-semibold mb-4 text-gray-700">Results:</h2>
+                <p class="text-gray-600"><span class="font-medium">Compact:</span> ${result.compact}</p>
+                <p class="text-gray-600"><span class="font-medium">Exponent:</span> ${result.exponent}</p>
+                <p class="text-gray-600"><span class="font-medium">Coefficient:</span> ${result.coefficient}</p>
+                <p class="text-gray-600"><span class="font-medium">Target (Decimal):</span> ${result.targetDecimal}</p>
+                <p class="text-gray-600"><span class="font-medium">Target (Hex):</span> ${result.targetHex}</p>
+                <p class="text-gray-600"><span class="font-medium">Target (32 bytes hex):</span> ${result.targetBytes}</p>
+                <p class="text-gray-600"><span class="font-medium">Difficulty:</span> ${result.difficulty}</p>
+            `;
+        }
+    </script>
+</body>
+</html>

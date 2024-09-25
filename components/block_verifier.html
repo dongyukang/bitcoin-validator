@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Block Verifier</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md">
+        <h1 class="text-2xl font-bold mb-4">Block Verifier</h1>
+        <input type="text" id="hexInput" placeholder="Enter your 80-byte hexadecimal input" class="w-full p-2 border rounded mb-4">
+        <button onclick="verifyBlock()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Verify</button>
+        <div id="result" class="mt-4"></div>
+    </div>
+
+    <script>
+        function splitHexInput(hexInput) {
+            const byteGroups = [4, 32, 32, 4, 4, 4];
+            let result = [];
+            let start = 0;
+            for (let group of byteGroups) {
+                let end = start + group * 2;
+                result.push(hexInput.slice(start, end));
+                start = end;
+            }
+            return result;
+        }
+
+        function littleEndianConvert(hexString) {
+            return hexString.match(/.{2}/g).reverse().join('');
+        }
+
+        function hexToUint8Array(hexString) {
+            return new Uint8Array(hexString.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+        }
+
+        async function verifyBlock() {
+            const rawInput = document.getElementById('hexInput').value;
+            const resultDiv = document.getElementById('result');
+
+            if (rawInput.length === 160) {
+                const splitResult = splitHexInput(rawInput);
+                const labels = ["Version", "prevBlockHash", "MerkleRoot", "Timestamp", "nBits", "Nonce"];
+
+                let output = "<h2 class='text-xl font-semibold mt-4 mb-2'>Split result:</h2>";
+                splitResult.forEach((group, i) => {
+                    const littleEndian = littleEndianConvert(group);
+                    output += `<p><strong>${labels[i]}</strong> (${group.length / 2} bytes): ${littleEndian}</p>`;
+                });
+
+                const inputBytes = hexToUint8Array(rawInput);
+                const firstHashBytes = await crypto.subtle.digest('SHA-256', inputBytes);
+                const secondHashBytes = await crypto.subtle.digest('SHA-256', firstHashBytes);
+                
+                const finalHash = Array.from(new Uint8Array(secondHashBytes))
+                    .map(b => b.toString(16).padStart(2, '0'))
+                    .join('');
+                
+                const finalHashLittleEndian = littleEndianConvert(finalHash);
+                output += `<p class='mt-4'><strong>SHA256 Hash</strong> (32 bytes): ${finalHashLittleEndian}</p>`;
+
+                resultDiv.innerHTML = output;
+            } else {
+                resultDiv.innerHTML = "<p class='text-red-500'>Invalid input length. Please enter exactly 80 bytes (160 hexadecimal characters).</p>";
+            }
+        }
+    </script>
+</body>
+</html>
+
