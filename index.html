@@ -118,13 +118,19 @@
                   const splitResult = splitHexInput(rawInput);
                   const labels = ["Version", "prevBlockHash", "MerkleRoot", "Timestamp", "nBits", "Nonce"];
 
+                  // Extract nBits value
+                  const nBits = littleEndianConvert(splitResult[4]);
+
+                  // Set nBits as input for target calculator
+                  document.getElementById('compactInput').value = "0x" + nBits;
+
+                  // Automatically trigger target calculation
+                  calculateTarget();
+
                   const targetCalculatorContent = document.getElementById('targetCalculatorContent');
                   const blockVerifierContent = document.getElementById('blockVerifierContent');
-    
-                  // blockVerifierContent.style.maxHeight = '300px';
-                  // targetCalculatorContent.style.maxHeight = '300px';
 
-                  let output = "<h3 class='text-xl font-semibold mt-4 mb-2'>Split result:</h3>";
+                  let output = "<h3 class='text-xl font-semibold mt-4 mb-2'>Results:</h3>";
                   splitResult.forEach((group, i) => {
                       const littleEndian = littleEndianConvert(group);
                       output += `<p><strong>${labels[i]}</strong> (${group.length / 2} bytes): ${littleEndian}</p>`;
@@ -133,11 +139,11 @@
                   const inputBytes = hexToUint8Array(rawInput);
                   const firstHashBytes = await crypto.subtle.digest('SHA-256', inputBytes);
                   const secondHashBytes = await crypto.subtle.digest('SHA-256', firstHashBytes);
-                
+      
                   const finalHash = Array.from(new Uint8Array(secondHashBytes))
                       .map(b => b.toString(16).padStart(2, '0'))
                       .join('');
-                
+      
                   const finalHashLittleEndian = littleEndianConvert(finalHash);
                   output += `<p class='mt-4'><strong>SHA256 Hash</strong> (32 bytes): ${finalHashLittleEndian}</p>`;
 
@@ -145,8 +151,7 @@
               } else {
                   resultDiv.innerHTML = "<p class='text-red-500'>Invalid input length. Please enter exactly 80 bytes (160 hexadecimal characters).</p>";
               }
-          }
-        function clearTargetCalculator() {
+          }        function clearTargetCalculator() {
             document.getElementById('compactInput').value = '';
             document.getElementById('result').innerHTML = '';
         }
