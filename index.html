@@ -145,7 +145,7 @@
                       .join('');
       
                   const finalHashLittleEndian = littleEndianConvert(finalHash);
-                  output += `<p class='mt-4'><strong>SHA256 Hash</strong> (32 bytes): ${finalHashLittleEndian}</p>`;
+                  output += `<p class='mt-4'><strong>Calculated Block Hash</strong> (32 bytes): ${finalHashLittleEndian}</p>`;
 
                   resultDiv.innerHTML = output;
               } else {
@@ -160,8 +160,23 @@
             document.getElementById('hexInput').value = '';
             document.getElementById('blockResult').innerHTML = '';
         }
+
+        
+        // Add event listeners for Enter key
+        document.getElementById('compactInput').addEventListener('keyup', function(event) {
+            if (event.key === 'Enter') {
+                calculateTarget();
+            }
+        });
+
+        document.getElementById('hexInput').addEventListener('keyup', function(event) {
+            if (event.key === 'Enter') {
+                verifyBlock();
+            }
+        });
       </script>
 
   </body>
     
   </html>
+
