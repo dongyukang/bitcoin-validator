@@ -10,6 +10,20 @@
       <div class="container mx-auto">
           <h1 class="text-3xl font-bold mb-6 text-center text-gray-800">Bitcoin Validator</h1>
           <div class="flex flex-wrap -mx-2">
+
+            <!-- Block Verifier -->
+            <div class="w-full md:w-1/2 px-2 mb-4">
+                <div id="blockVerifierContent" class="bg-white p-6 rounded-lg shadow-md transition-all duration-300 overflow-hidden">
+                    <h2 class="text-2xl font-bold mb-4">Block Verifier</h2>
+                    <input type="text" id="hexInput" placeholder="Enter your 80-byte hexadecimal input" class="w-full p-2 border rounded mb-4">
+                    <div class="flex space-x-2">
+                        <button onclick="verifyBlock()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Verify</button>
+                        <button onclick="clearBlockVerifier()" class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">Clear</button>
+                    </div>
+                    <div id="blockResult" class="mt-4"></div>
+                </div>
+            </div>
+
               <!-- Target Calculator -->
               <div class="w-full md:w-1/2 px-2 mb-4">
                   <div id="targetCalculatorContent" class="bg-white p-6 rounded-lg shadow-md transition-all duration-300 overflow-hidden">
@@ -20,19 +34,6 @@
                           <button onclick="clearTargetCalculator()" class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">Clear</button>
                       </div>
                       <div id="result" class="mt-4"></div>
-                  </div>
-              </div>
-            
-              <!-- Block Verifier -->
-              <div class="w-full md:w-1/2 px-2 mb-4">
-                  <div id="blockVerifierContent" class="bg-white p-6 rounded-lg shadow-md transition-all duration-300 overflow-hidden">
-                      <h2 class="text-2xl font-bold mb-4">Block Verifier</h2>
-                      <input type="text" id="hexInput" placeholder="Enter your 80-byte hexadecimal input" class="w-full p-2 border rounded mb-4">
-                      <div class="flex space-x-2">
-                          <button onclick="verifyBlock()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Verify</button>
-                          <button onclick="clearBlockVerifier()" class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">Clear</button>
-                      </div>
-                      <div id="blockResult" class="mt-4"></div>
                   </div>
               </div>
           </div>
